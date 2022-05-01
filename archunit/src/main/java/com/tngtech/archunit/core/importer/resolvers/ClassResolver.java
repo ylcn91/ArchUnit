@@ -160,7 +160,8 @@ public interface ClassResolver {
         private ClassResolverProvider tryCreateResolverProviderForDefaultConstructor(final Class<?> resolverClass, final List<String> args) {
             final Constructor<?> defaultConstructor;
             try {
-                defaultConstructor = resolverClass.getConstructor();
+                defaultConstructor = resolverClass.getDeclaredConstructor();
+                defaultConstructor.setAccessible(true);
             } catch (NoSuchMethodException e) {
                 throw ClassResolverConfigurationException.onWrongArguments(resolverClass, e);
             }
@@ -168,7 +169,7 @@ public interface ClassResolver {
             return new ClassResolverProvider(instantiationException(defaultConstructor, args)) {
                 @Override
                 ClassResolver tryGet() throws Exception {
-                    return (ClassResolver) resolverClass.getConstructor().newInstance();
+                    return (ClassResolver) defaultConstructor.newInstance();
                 }
             };
         }

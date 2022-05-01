@@ -101,6 +101,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -1260,8 +1261,7 @@ class ArchUnitTestEngineTest {
     }
 
     private void simulateCachedClassesForTest(Class<?> testClass, Class<?> classToReturn) {
-        when(classCache.getClassesToAnalyzeFor(eq(testClass), classAnalysisRequestOf(testClass)))
-                .thenReturn(importClasses(classToReturn));
+        doReturn(importClasses(classToReturn)).when(classCache).getClassesToAnalyzeFor(eq(testClass), classAnalysisRequestOf(testClass));
     }
 
     private ClassAnalysisRequest classAnalysisRequestOf(Class<?> testClass) {
