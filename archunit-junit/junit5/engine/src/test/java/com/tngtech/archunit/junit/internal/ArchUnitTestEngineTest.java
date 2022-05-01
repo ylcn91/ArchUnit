@@ -37,6 +37,7 @@ import com.tngtech.archunit.junit.internal.testexamples.TestMethodWithMetaTags;
 import com.tngtech.archunit.junit.internal.testexamples.TestMethodWithTags;
 import com.tngtech.archunit.junit.internal.testexamples.UnwantedClass;
 import com.tngtech.archunit.junit.internal.testexamples.abstractbase.ArchTestWithAbstractBaseClassWithFieldRule;
+import com.tngtech.archunit.junit.internal.testexamples.abstractbase.ArchTestWithAbstractBaseClassWithMethodRule;
 import com.tngtech.archunit.junit.internal.testexamples.ignores.IgnoredClass;
 import com.tngtech.archunit.junit.internal.testexamples.ignores.IgnoredField;
 import com.tngtech.archunit.junit.internal.testexamples.ignores.IgnoredLibrary;
@@ -829,6 +830,17 @@ class ArchUnitTestEngineTest {
             EngineExecutionTestListener testListener = execute(engineId, SimpleRuleMethod.class);
 
             testListener.verifyViolation(simpleRuleMethodTestId(engineId), UnwantedClass.CLASS_VIOLATING_RULES.getSimpleName());
+        }
+
+        @Test
+        void instance_method_rule_in_abstract_base_class() {
+            simulateCachedClassesForTest(ArchTestWithAbstractBaseClassWithMethodRule.class, UnwantedClass.CLASS_SATISFYING_RULES);
+
+            EngineExecutionTestListener testListener = execute(engineId, ArchTestWithAbstractBaseClassWithMethodRule.class);
+
+            testListener.verifySuccessful(engineId
+                    .append(CLASS_SEGMENT_TYPE, ArchTestWithAbstractBaseClassWithMethodRule.class.getName())
+                    .append(METHOD_SEGMENT_TYPE, ArchTestWithAbstractBaseClassWithMethodRule.INSTANCE_METHOD_NAME));
         }
 
         @Test

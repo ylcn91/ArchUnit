@@ -17,6 +17,7 @@ package com.tngtech.archunit.junit.internal;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -197,7 +198,10 @@ class ArchUnitTestDescriptor extends AbstractArchUnitTestDescriptor implements C
 
         @Override
         public ArchUnitEngineExecutionContext execute(ArchUnitEngineExecutionContext context, DynamicTestExecutor dynamicTestExecutor) {
-            invokeMethod(method, method.getDeclaringClass(), classes.get());
+            Class<?> methodOwner = getParent().flatMap(parent ->
+                    parent instanceof ArchUnitTestDescriptor ? Optional.of(((ArchUnitTestDescriptor) parent).testClass) : Optional.<Class<?>>empty()
+            ).orElseGet(method::getDeclaringClass);
+            invokeMethod(method, methodOwner, classes.get());
             return context;
         }
     }
