@@ -109,11 +109,17 @@ class ArchUnitTestDescriptor extends AbstractArchUnitTestDescriptor implements C
         if (ArchTests.class.isAssignableFrom(field.getType())) {
             resolveArchRules(parent, resolver, field, classes);
         } else {
-            Class<?> fieldOwner = parent instanceof ArchUnitTestDescriptor
-                    ? ((ArchUnitTestDescriptor) parent).testClass
-                    : field.getDeclaringClass();
+            Class<?> fieldOwner = tryToFindOwner(parent).orElseGet(field::getDeclaringClass);
             parent.addChild(new ArchUnitRuleDescriptor(resolver.getUniqueId(), getValue(field, fieldOwner), classes, field));
         }
+    }
+
+    private static Optional<Class<?>> tryToFindOwner(TestDescriptor parent) {
+        return parent instanceof ArchUnitTestDescriptor
+                ? Optional.of(((ArchUnitTestDescriptor) parent).testClass)
+                : parent instanceof ArchUnitArchTestsDescriptor
+                ? Optional.of(((ArchUnitArchTestsDescriptor) parent).archTests.getDefinitionLocation())
+                : Optional.empty();
     }
 
     private static <T> T getValue(Field field, Class<?> fieldOwner) {
@@ -198,9 +204,7 @@ class ArchUnitTestDescriptor extends AbstractArchUnitTestDescriptor implements C
 
         @Override
         public ArchUnitEngineExecutionContext execute(ArchUnitEngineExecutionContext context, DynamicTestExecutor dynamicTestExecutor) {
-            Class<?> methodOwner = getParent().flatMap(parent ->
-                    parent instanceof ArchUnitTestDescriptor ? Optional.of(((ArchUnitTestDescriptor) parent).testClass) : Optional.<Class<?>>empty()
-            ).orElseGet(method::getDeclaringClass);
+            Class<?> methodOwner = getParent().flatMap(ArchUnitTestDescriptor::tryToFindOwner).orElseGet(method::getDeclaringClass);
             invokeMethod(method, methodOwner, classes.get());
             return context;
         }

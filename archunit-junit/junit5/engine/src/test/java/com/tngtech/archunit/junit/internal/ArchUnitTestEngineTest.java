@@ -38,6 +38,7 @@ import com.tngtech.archunit.junit.internal.testexamples.TestMethodWithTags;
 import com.tngtech.archunit.junit.internal.testexamples.UnwantedClass;
 import com.tngtech.archunit.junit.internal.testexamples.abstractbase.ArchTestWithAbstractBaseClassWithFieldRule;
 import com.tngtech.archunit.junit.internal.testexamples.abstractbase.ArchTestWithAbstractBaseClassWithMethodRule;
+import com.tngtech.archunit.junit.internal.testexamples.abstractbase.ArchTestWithLibraryWithAbstractBaseClass;
 import com.tngtech.archunit.junit.internal.testexamples.ignores.IgnoredClass;
 import com.tngtech.archunit.junit.internal.testexamples.ignores.IgnoredField;
 import com.tngtech.archunit.junit.internal.testexamples.ignores.IgnoredLibrary;
@@ -870,6 +871,26 @@ class ArchUnitTestEngineTest {
 
             privateRuleLibraryIds(engineId).forEach(testId ->
                     testListener.verifyViolation(testId, UnwantedClass.CLASS_VIOLATING_RULES.getSimpleName()));
+        }
+
+        @Test
+        public void library_with_rules_in_abstract_base_class() {
+            simulateCachedClassesForTest(ArchTestWithLibraryWithAbstractBaseClass.class, UnwantedClass.CLASS_SATISFYING_RULES);
+
+            EngineExecutionTestListener testListener = execute(engineId, ArchTestWithLibraryWithAbstractBaseClass.class);
+
+            testListener.verifySuccessful(engineId
+                    .append(CLASS_SEGMENT_TYPE, ArchTestWithLibraryWithAbstractBaseClass.class.getName())
+                    .append(FIELD_SEGMENT_TYPE, ArchTestWithLibraryWithAbstractBaseClass.FIELD_RULE_LIBRARY_NAME)
+                    .append(CLASS_SEGMENT_TYPE, ArchTestWithAbstractBaseClassWithFieldRule.class.getName())
+                    .append(FIELD_SEGMENT_TYPE, ArchTestWithAbstractBaseClassWithFieldRule.INSTANCE_FIELD_NAME)
+                    );
+            testListener.verifySuccessful(engineId
+                    .append(CLASS_SEGMENT_TYPE, ArchTestWithLibraryWithAbstractBaseClass.class.getName())
+                    .append(FIELD_SEGMENT_TYPE, ArchTestWithLibraryWithAbstractBaseClass.METHOD_RULE_LIBRARY_NAME)
+                    .append(CLASS_SEGMENT_TYPE, ArchTestWithAbstractBaseClassWithMethodRule.class.getName())
+                    .append(METHOD_SEGMENT_TYPE, ArchTestWithAbstractBaseClassWithMethodRule.INSTANCE_METHOD_NAME)
+                    );
         }
 
         @Test
