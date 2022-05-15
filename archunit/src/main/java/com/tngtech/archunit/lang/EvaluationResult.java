@@ -15,8 +15,10 @@
  */
 package com.tngtech.archunit.lang;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import com.google.common.collect.ImmutableList;
@@ -42,7 +44,8 @@ import static java.util.stream.Collectors.toList;
  */
 public final class EvaluationResult {
     private final HasDescription rule;
-    private final ConditionEvents events;
+    private final List<ConditionEvent> violations;
+    private final Optional<String> informationAboutNumberOfViolations;
     private final Priority priority;
 
     @PublicAPI(usage = ACCESS)
@@ -53,25 +56,24 @@ public final class EvaluationResult {
     @PublicAPI(usage = ACCESS)
     public EvaluationResult(HasDescription rule, ConditionEvents events, Priority priority) {
         this.rule = rule;
-        this.events = events;
+        this.violations = new ArrayList<>(events.getViolating());
+        this.informationAboutNumberOfViolations = events.getInformationAboutNumberOfViolations();
         this.priority = priority;
     }
 
     @PublicAPI(usage = ACCESS)
     public FailureReport getFailureReport() {
-        ImmutableList<String> result = events.getViolating().stream()
+        ImmutableList<String> result = violations.stream()
                 .flatMap(event -> event.getDescriptionLines().stream())
                 .sorted(natural())
                 .collect(toImmutableList());
-        FailureMessages failureMessages = new FailureMessages(result, events.getInformationAboutNumberOfViolations());
+        FailureMessages failureMessages = new FailureMessages(result, informationAboutNumberOfViolations);
         return new FailureReport(rule, priority, failureMessages);
     }
 
     @PublicAPI(usage = ACCESS)
     public void add(EvaluationResult part) {
-        for (ConditionEvent event : part.events) {
-            events.add(event);
-        }
+        violations.addAll(part.violations);
     }
 
     /**
@@ -102,7 +104,7 @@ public final class EvaluationResult {
     public final <T> void handleViolations(ViolationHandler<T> violationHandler, T... __ignore_this_parameter_to_reify_type__) {
         Class<T> correspondingObjectType = componentTypeOf(__ignore_this_parameter_to_reify_type__);
         ConditionEvent.Handler eventHandler = convertToEventHandler(correspondingObjectType, violationHandler);
-        for (final ConditionEvent event : events.getViolating()) {
+        for (final ConditionEvent event : violations) {
             event.handleWith(eventHandler);
         }
     }
@@ -129,7 +131,7 @@ public final class EvaluationResult {
 
     @PublicAPI(usage = ACCESS)
     public boolean hasViolation() {
-        return events.containViolation();
+        return !violations.isEmpty();
     }
 
     @PublicAPI(usage = ACCESS)
@@ -147,7 +149,7 @@ public final class EvaluationResult {
     @PublicAPI(usage = ACCESS)
     public EvaluationResult filterDescriptionsMatching(Predicate<String> linePredicate) {
         ConditionEvents filtered = ConditionEvents.Factory.create();
-        for (ConditionEvent event : events) {
+        for (ConditionEvent event : violations) {
             filtered.add(new FilteredEvent(event, linePredicate));
         }
         return new EvaluationResult(rule, filtered, priority);
