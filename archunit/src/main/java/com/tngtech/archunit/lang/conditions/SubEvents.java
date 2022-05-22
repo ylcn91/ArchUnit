@@ -15,36 +15,57 @@
  */
 package com.tngtech.archunit.lang.conditions;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import com.tngtech.archunit.lang.ConditionEvent;
 import com.tngtech.archunit.lang.ConditionEvents;
 
-abstract class DelegatingConditionEvents implements ConditionEvents {
-    final ConditionEvents delegate;
+final class SubEvents implements ConditionEvents {
+    private final List<ConditionEvent> allowedEvents = new ArrayList<>();
+    private final List<ConditionEvent> violatingEvents = new ArrayList<>();
+    private Optional<String> informationAboutNumberOfViolations = Optional.empty();
 
-    DelegatingConditionEvents(ConditionEvents delegate) {
-        this.delegate = delegate;
+    @Override
+    public void add(ConditionEvent event) {
+        if (event.isViolation()) {
+            violatingEvents.add(event);
+        } else {
+            allowedEvents.add(event);
+        }
     }
 
     @Override
     public Optional<String> getInformationAboutNumberOfViolations() {
-        return delegate.getInformationAboutNumberOfViolations();
+        return informationAboutNumberOfViolations;
     }
 
     @Override
     public void setInformationAboutNumberOfViolations(String informationAboutNumberOfViolations) {
-        delegate.setInformationAboutNumberOfViolations(informationAboutNumberOfViolations);
+        this.informationAboutNumberOfViolations = Optional.of(informationAboutNumberOfViolations);
     }
 
     @Override
     public Collection<ConditionEvent> getViolating() {
-        return delegate.getViolating();
+        return violatingEvents;
+    }
+
+    Collection<ConditionEvent> getAllowed() {
+        return allowedEvents;
     }
 
     @Override
     public boolean containViolation() {
-        return delegate.containViolation();
+        return !getViolating().isEmpty();
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "{" +
+                "Allowed Events: " + getAllowed() +
+                "; Violating Events: " + getViolating() +
+                '}';
     }
 }

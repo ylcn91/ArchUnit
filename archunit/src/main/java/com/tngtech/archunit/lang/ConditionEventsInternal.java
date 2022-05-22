@@ -15,14 +15,15 @@
  */
 package com.tngtech.archunit.lang;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.ImmutableList;
 
 final class ConditionEventsInternal implements ConditionEvents {
-    private final Multimap<Type, ConditionEvent> eventsByViolation = ArrayListMultimap.create();
+    private final List<ConditionEvent> violations = new ArrayList<>();
     private Optional<String> informationAboutNumberOfViolations = Optional.empty();
 
     ConditionEventsInternal() {
@@ -30,7 +31,9 @@ final class ConditionEventsInternal implements ConditionEvents {
 
     @Override
     public void add(ConditionEvent event) {
-        eventsByViolation.get(Type.from(event.isViolation())).add(event);
+        if (event.isViolation()) {
+            violations.add(event);
+        }
     }
 
     @Override
@@ -45,32 +48,16 @@ final class ConditionEventsInternal implements ConditionEvents {
 
     @Override
     public Collection<ConditionEvent> getViolating() {
-        return eventsByViolation.get(Type.VIOLATION);
-    }
-
-    @Override
-    public Collection<ConditionEvent> getAllowed() {
-        return eventsByViolation.get(Type.ALLOWED);
+        return ImmutableList.copyOf(violations);
     }
 
     @Override
     public boolean containViolation() {
-        return !getViolating().isEmpty();
+        return !violations.isEmpty();
     }
 
     @Override
     public String toString() {
-        return "ConditionEvents{" +
-                "Allowed Events: " + getAllowed() +
-                "; Violating Events: " + getViolating() +
-                '}';
-    }
-
-    private enum Type {
-        ALLOWED, VIOLATION;
-
-        private static Type from(boolean violation) {
-            return violation ? VIOLATION : ALLOWED;
-        }
+        return "ConditionEvents{" + violations + '}';
     }
 }
