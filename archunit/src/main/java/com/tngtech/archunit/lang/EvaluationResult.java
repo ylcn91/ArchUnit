@@ -170,8 +170,8 @@ public final class EvaluationResult {
         }
 
         @Override
-        public void addInvertedTo(ConditionEvents events) {
-            delegate.addInvertedTo(events);
+        public ConditionEvent invert() {
+            return new FilteredEvent(delegate.invert(), linePredicate);
         }
 
         @Override
